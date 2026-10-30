@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jeu de la gouvernance</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EDF1;--paper:#FFFFFF;--sunk:#F3F5F8;--ink:#14212E;--muted:#586575;--rule:#C9D1DA;
+  --accent:#1E5B4F;--on-accent:#FFFFFF;--ok:#2F7A4A;--bad:#B4312B;--warn:#9A6A00;
+  --band:rgba(47,122,74,.16);
+  --c0:#1F5FAD;--c1:#B3261E;--c2:#2E7D4F;--c3:#7D3C98;--c4:#A8680A;--c5:#0E7C86;
+  --font:"Archivo","Arial Narrow",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10161D;--paper:#18212B;--sunk:#1D2732;--ink:#E5EBF1;--muted:#97A4B2;--rule:#2C3946;
+  --accent:#4FB39C;--on-accent:#0E1A17;--ok:#5CC285;--bad:#F07A72;--warn:#E0B04A;--band:rgba(92,194,133,.16);
+  --c0:#79A8EE;--c1:#F07A72;--c2:#6CC48E;--c3:#C69AE0;--c4:#E5AE55;--c5:#4FC3CE;color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#10161D;--paper:#18212B;--sunk:#1D2732;--ink:#E5EBF1;--muted:#97A4B2;--rule:#2C3946;
+  --accent:#4FB39C;--on-accent:#0E1A17;--ok:#5CC285;--bad:#F07A72;--warn:#E0B04A;--band:rgba(92,194,133,.16);
+  --c0:#79A8EE;--c1:#F07A72;--c2:#6CC48E;--c3:#C69AE0;--c4:#E5AE55;--c5:#4FC3CE;color-scheme:dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--font);font-stretch:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,.num{font-family:var(--font);font-stretch:75%;line-height:1.1;margin:0}
+h1{font-weight:800;font-size:1.6rem}
+h2{font-weight:750;font-size:1.5rem;margin:0 0 .6rem}
+h3{font-weight:700;font-size:1.15rem;margin:0 0 .35rem}
+p{margin:.3rem 0}
+.num{font-variant-numeric:tabular-nums;font-weight:750}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+.bar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.7rem 1.2rem;background:var(--paper);border-bottom:3px solid var(--ink)}
+#status{flex:1;min-width:12rem;color:var(--muted)}
+#timer{font-family:var(--font);font-stretch:75%;font-weight:800;font-size:2rem;font-variant-numeric:tabular-nums}
+#timer.low{color:var(--bad)}
+main{max-width:1240px;margin:0 auto;padding:1.1rem}
+.panel{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:1rem 1.1rem;margin-bottom:1rem}
+.grid{display:grid;gap:1rem}
+@media (min-width:880px){.g2{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}.g2e{grid-template-columns:1fr 1fr}}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.btn{border:2px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:4px;padding:.5rem .95rem;font-weight:650;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+.btn.small{padding:.25rem .6rem;font-size:.9rem}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+input[type=text],input[type=number],select,textarea{background:var(--sunk);border:1px solid var(--rule);border-radius:4px;padding:.45rem .6rem;min-width:0}
+textarea{width:100%;min-height:4.5rem;resize:vertical}
+label.f{display:block;font-size:.88rem;color:var(--muted);margin-bottom:.6rem}
+label.f>input,label.f>select,label.f>textarea{display:block;width:100%;margin-top:.2rem;color:var(--ink)}
+.tabs{display:flex;gap:.2rem;border-bottom:2px solid var(--rule);margin-bottom:1rem;flex-wrap:wrap}
+.tabs button{border:none;background:none;padding:.55rem .9rem;font-family:var(--font);font-stretch:75%;font-weight:700;font-size:1.15rem;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.cname{display:flex;align-items:center;gap:.55rem}
+.flag{width:14px;height:28px;border-radius:2px;background:var(--cc);flex:none}
+/* Jauges */
+.gauge{margin:.55rem 0}
+.gauge .lab{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}
+.gauge .val{font-family:var(--font);font-stretch:75%;font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums}
+.gauge.ok .val{color:var(--ok)} .gauge.bad .val{color:var(--bad)} .gauge.warn .val{color:var(--warn)}
+.track{position:relative;height:12px;background:var(--sunk);border:1px solid var(--rule);border-radius:2px;margin-top:.2rem}
+.track .zone{position:absolute;top:0;bottom:0;background:var(--band)}
+.track .mark{position:absolute;top:-5px;width:4px;height:20px;margin-left:-2px;background:var(--ink);border-radius:1px}
+.gauge.ok .mark{background:var(--ok)} .gauge.bad .mark{background:var(--bad)} .gauge.warn .mark{background:var(--warn)}
+.scorebox{display:flex;align-items:baseline;gap:.4rem;flex-wrap:wrap;border-top:1px solid var(--rule);padding-top:.6rem;margin-top:.6rem}
+.scorebox .num{font-size:1.25rem}
+.scorebox .big{font-size:2.2rem}
+/* Vote */
+.pols{display:grid;gap:.5rem}
+.pol{display:block;width:100%;text-align:left;border:2px solid var(--rule);background:var(--sunk);border-radius:5px;padding:.6rem .8rem;cursor:pointer}
+.pol[aria-pressed="true"]{border-color:var(--accent);background:var(--paper);box-shadow:inset 4px 0 0 var(--accent)}
+.pol b{display:block;font-size:1.02rem}
+.pol span{display:block;font-size:.88rem;color:var(--muted)}
+.pol:disabled{cursor:not-allowed;opacity:.55}
+.card{border:1px solid var(--rule);border-left:5px solid var(--k,var(--muted));border-radius:4px;padding:.55rem .75rem;margin:.45rem 0;background:var(--sunk)}
+.card.ev{--k:var(--accent)}
+.card.A{--k:var(--bad)} .card.B{--k:var(--c0)} .card.C{--k:var(--warn)} .card.D{--k:var(--c3)}
+.card .fx{font-size:.88rem;color:var(--muted)}
+.steps{margin:.4rem 0 0;padding-left:1.2rem} .steps li{margin-bottom:.25rem;font-size:.92rem}
+.pill{display:inline-block;border:1px solid currentColor;border-radius:3px;padding:0 .4rem;font-size:.8rem;font-weight:650}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--font);font-stretch:75%;font-size:1.02rem}
+td.r,th.r{text-align:right}
+.scroll{overflow-x:auto}
+.tally{display:flex;flex-direction:column;gap:.2rem;margin:.4rem 0}
+.tally div{display:flex;gap:.5rem;align-items:center;font-size:.9rem}
+.tally i{display:block;height:8px;background:var(--accent);border-radius:2px}
+.why{font-size:.9rem;border-left:3px solid var(--rule);padding-left:.6rem;margin:.35rem 0}
+.bulletin{border:1px solid var(--rule);border-left:5px solid var(--warn);background:var(--sunk);border-radius:4px;padding:.6rem .8rem;margin:.2rem 0 .8rem}
+.bulletin p{margin:.2rem 0;font-style:italic}
+.bulletin p.small{font-style:normal}
+.urgq{border:1px dashed var(--bad);border-radius:4px;padding:.6rem .8rem;margin-top:.7rem}
+.urgq p{margin:.15rem 0}
+.edit-row.u6{grid-template-columns:2fr repeat(6,minmax(3.4rem,1fr))}
+@media (max-width:700px){.edit-row.u6{grid-template-columns:1fr 1fr 1fr}}
+/* Affichage */
+.wall{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.cpanel{background:var(--paper);border:1px solid var(--rule);border-top:6px solid var(--cc);border-radius:6px;padding:.8rem 1rem}
+.cpanel .head{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+.cpanel h2{font-size:1.9rem;margin:0}
+.rank{font-family:var(--font);font-stretch:75%;font-weight:800;font-size:1.05rem;color:var(--muted)}
+.state{margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--rule);font-size:.95rem}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem}
+.chip{font-size:.82rem;border:1px solid var(--rule);border-radius:3px;padding:.05rem .4rem;background:var(--sunk)}
+.chip.A{border-color:var(--bad)} .chip.B{border-color:var(--c0)} .chip.C{border-color:var(--warn)} .chip.D{border-color:var(--c3)}
+svg{display:block;max-width:100%;height:auto}
+svg text{fill:var(--muted);font:500 11px var(--font)}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:14px;height:3px;margin-right:.35rem;vertical-align:middle;background:var(--lc)}
+.edit-row{display:grid;gap:.4rem;grid-template-columns:2fr repeat(5,minmax(3.6rem,1fr)) auto;align-items:center;padding:.4rem 0;border-bottom:1px dashed var(--rule)}
+.edit-row input[type=number]{width:100%}
+.edit-row textarea{grid-column:1 / -1;min-height:2.6rem}
+@media (max-width:700px){.edit-row{grid-template-columns:1fr 1fr 1fr}.edit-row>:first-child{grid-column:1 / -1}}
+.edit-head{font-size:.8rem;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:4px;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+#toast.on{opacity:1}
+.center{text-align:center;padding:3rem 1rem}
+.center .big{font-family:var(--font);font-stretch:75%;font-weight:800;font-size:2rem}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<header class="bar"><h1>Jeu de la gouvernance</h1><div id="status">Connexion…</div><div id="timer" aria-live="off"></div></header>
+<main id="app"><p class="center muted">Connexion au jeu…</p></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* =====================================================================
+   À REMPLIR AVANT LA MISE EN LIGNE (voir le guide, étape 5)
+   1. Remplace tout l'objet firebase:{...} par celui que la console
+      Firebase te donne (« const firebaseConfig = {...} »).
+   2. Remplace COLLE_ICI_TON_UID par l'identifiant (UID) de ton compte
+      enseignant.
+   ===================================================================== */
+window.GOV_CONFIG={
+  firebase:{
+    apiKey:"AIzaSyBUKbopfCJ_kIzCmxDUBLyrDSIqwyiRMbc",
+    authDomain:"jeu-gouvernance.firebaseapp.com",
+    projectId:"jeu-gouvernance",
+    storageBucket:"jeu-gouvernance.firebasestorage.app",
+    messagingSenderId:"971052477351",
+    appId:"1:971052477351:web:2dbd34e104ee2a25ce2482"
+  },
+  adminUid:"PQPbsGYDdbUIsdUdC66zuBSx1mF3"
+};
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInAnonymously,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,collection,query,where,limit,getDoc,getDocs,setDoc,updateDoc,deleteDoc,onSnapshot,runTransaction} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const C=window.GOV_CONFIG;
+function ready(b){window.GOV_BACKEND=b;window.dispatchEvent(new Event("gov-backend"));}
+if(!C||!C.firebase||String(C.firebase.apiKey||"").indexOf("COLLE")>=0||String(C.adminUid||"").indexOf("COLLE")>=0){ready({error:"config"});}
+else{
+  const app=initializeApp(C.firebase),auth=getAuth(app),fs=getFirestore(app);
+  const ref=p=>doc(fs,...p.split("/"));
+  const wrap=s=>({exists:s.exists(),id:s.id,data:()=>s.data()});
+  const mkQ=(col,cons)=>({
+    where:(f,op,v)=>mkQ(col,cons.concat([where(f,op,v)])),
+    limit:n=>mkQ(col,cons.concat([limit(n)])),
+    get:async()=>{const q=await getDocs(query(collection(fs,col),...cons));return {docs:q.docs.map(wrap)}},
+    onSnapshot:(cb,err)=>onSnapshot(query(collection(fs,col),...cons),q=>cb({docs:q.docs.map(wrap)}),err)
+  });
+  const db={
+    doc:p=>({get:async()=>wrap(await getDoc(ref(p))),set:d=>setDoc(ref(p),d),update:d=>updateDoc(ref(p),d),delete:()=>deleteDoc(ref(p)),
+      onSnapshot:(cb,err)=>onSnapshot(ref(p),s=>cb(wrap(s)),err)}),
+    collection:c=>mkQ(c,[]),
+    tx:fn=>runTransaction(fs,t=>fn({get:async p=>wrap(await t.get(ref(p))),set:(p,d)=>{t.set(ref(p),d)}}))
+  };
+  ready({db,adminUid:C.adminUid,onAuth:cb=>onAuthStateChanged(auth,u=>cb(u?u.uid:null)),
+    anon:()=>signInAnonymously(auth),login:(e,p)=>signInWithEmailAndPassword(auth,e,p),logout:()=>signOut(auth)});
+}
+</script>
+<script>
+"use strict";
+/* ========== Utilitaires ========== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const r1=x=>Math.round((+x||0)*10)/10;
+const fmt=x=>String(r1(Math.abs(x))).replace(".",",");
+const pct=x=>(r1(x)<0?"−":"")+fmt(x)+" %";
+const sgn=x=>(r1(x)>0?"+":r1(x)<0?"−":"")+fmt(x);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const newId=()=>Math.random().toString(36).slice(2,9);
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),3500)}
+
+/* ========== Contenu de départ ========== */
+const DEF_NAMES=["Borélie","Valmérie","Kastalie","Norvanie","Sélanie","Tramontie"];
+const START={ch:6,inf:2,cr:0};
+const FLAGS={"":"Aucun effet spécial",noA:"Pas de carte A ce tour","2A":"Double carte A ce tour","2B":"Double carte B ce tour","2C":"Double carte C ce tour","2D":"Double carte D ce tour"};
+const CATS={A:"Inflation au-dessus de 4 %",B:"Inflation sous 0 %",C:"Chômage au-dessus de 7 %",D:"Chômage sous 4 %"};
+function defaultDecks(){
+  let n=0;const id=p=>p+(++n);
+  const E=(name,ch,inf,cr,flag,desc,bulletin)=>({id:id("e"),name,ch,inf,cr,flag,desc,bulletin});
+  const K=(name,ch,inf,cr,pop,fin,desc)=>({id:id("k"),name,ch,inf,cr,pop,fin,desc});
+  return {
+    policies:[
+      {id:"bud+",name:"Politique budgétaire expansionniste",short:"Budg. +",ch:-1,inf:2,cr:2,pop:0,fin:1,lag:false,desc:"Hausser les dépenses publiques ou baisser les impôts."},
+      {id:"bud-",name:"Politique budgétaire restrictive",short:"Budg. −",ch:2,inf:-1,cr:-2,pop:1,fin:0,lag:false,desc:"Réduire les dépenses publiques ou hausser les impôts."},
+      {id:"mon+",name:"Politique monétaire expansionniste",short:"Monét. +",ch:-1,inf:3,cr:1,pop:0,fin:0,lag:true,desc:"Baisser les taux d'intérêt. L'effet sur l'inflation n'arrive qu'au tour suivant."},
+      {id:"mon-",name:"Politique monétaire restrictive",short:"Monét. −",ch:1,inf:-3,cr:-1,pop:0,fin:0,lag:true,desc:"Hausser les taux d'intérêt. L'effet sur l'inflation n'arrive qu'au tour suivant."},
+      {id:"rien",name:"Ne rien faire",short:"Rien",ch:0,inf:0,cr:0,pop:0,fin:0,lag:false,desc:"Laisser l'économie évoluer sans intervenir."}
+    ],
+    urgent:[
+      {id:"u-bud+",base:"bud+",name:"Plan de relance d'urgence",short:"Budg. + !",ch:-3,inf:1,cr:2,pop:0,fin:2,def:0,desc:"Un programme massif d'investissements publics, lancé immédiatement."},
+      {id:"u-bud-",base:"bud-",name:"Gel des dépenses publiques",short:"Budg. − !",ch:1,inf:-2,cr:-1,pop:2,fin:0,def:0,desc:"Toutes les nouvelles dépenses sont suspendues du jour au lendemain."},
+      {id:"u-mon+",base:"mon+",name:"Assouplissement monétaire massif",short:"Monét. + !",ch:-2,inf:1,cr:2,pop:0,fin:1,def:1,desc:"Une baisse spectaculaire des taux, annoncée avec fracas : la confiance revient tout de suite, l'inflation suit."},
+      {id:"u-mon-",base:"mon-",name:"Choc de taux d'intérêt",short:"Monét. − !",ch:1,inf:-3,cr:-2,pop:2,fin:0,def:-1,desc:"Une hausse brutale des taux : les anticipations d'inflation chutent tout de suite."}
+    ],
+    events:[
+      E("Boom technologique",-1,0,2,"noA","Une vague d'innovations attire les investissements : la productivité grimpe sans pousser les prix.","Plusieurs entreprises annoncent des percées technologiques, et les investisseurs sont optimistes."),
+      E("Hausse des prix de l'énergie",1,3,-2,"2A","Le prix du pétrole et de l'électricité s'envole : tout coûte plus cher à produire et à transporter.","Les marchés de l'énergie sont nerveux. Plusieurs analystes craignent une flambée du prix du baril."),
+      E("Crise financière",2,-1,-3,"","Une grande banque vacille, le crédit se resserre et les entreprises reportent leurs projets.","Des économistes s'inquiètent de la solidité de certaines banques très endettées."),
+      E("Grève nationale",1,1,-1,"2C","Un vaste mouvement de grève paralyse plusieurs secteurs et arrache des hausses de salaires.","Les négociations entre les grandes centrales syndicales et le patronat sont dans une impasse."),
+      E("Immigration massive",2,0,1,"","Une forte arrivée de nouveaux résidents fait croître la population active plus vite que les emplois, tout en stimulant la demande.","Les démographes s'attendent à une hausse marquée du nombre de nouveaux arrivants."),
+      E("Délocalisation industrielle",3,-1,-1,"","Plusieurs usines déménagent leur production à l'étranger, là où la main-d'œuvre coûte moins cher.","Plusieurs manufacturiers étudieraient la possibilité de déplacer leur production à l'étranger."),
+      E("Boom immobilier",-2,1,2,"","Les mises en chantier explosent et le prix des maisons grimpe.","Les permis de construire se multiplient et les acheteurs se bousculent dans les visites libres."),
+      E("Crise climatique",2,3,-2,"","Inondations et feux de forêt détruisent des récoltes et des infrastructures.","Les météorologues annoncent une saison d'événements climatiques extrêmes."),
+      E("Découverte d'une ressource naturelle",-2,0,2,"","Un gisement important est découvert : son exploitation crée des emplois et des revenus d'exportation.","Une société minière dit avoir trouvé des indices très prometteurs dans le Nord."),
+      E("Tarifs douaniers étrangers",2,1,-2,"","Votre principal partenaire commercial impose des droits de douane sur vos produits.","Le principal partenaire commercial du pays menace de protéger ses industries."),
+      E("Accord commercial",-1,0,2,"","Un nouvel accord ouvre de nouveaux marchés à vos entreprises exportatrices.","Des négociations commerciales avec plusieurs pays avancent plus vite que prévu."),
+      E("Hausse des taux d'intérêt mondiaux",1,-1,-1,"","Les grandes banques centrales relèvent leurs taux : emprunter coûte plus cher partout.","Les grandes banques centrales laissent entendre qu'elles pourraient durcir le ton."),
+      E("Pandémie",3,-1,-3,"","Un nouveau virus force la fermeture temporaire de nombreux commerces.","Les autorités sanitaires surveillent de près un nouveau virus qui circule à l'étranger."),
+      E("Sécheresse agricole",1,2,-1,"","Une sécheresse fait chuter les récoltes et grimper le prix des aliments.","Les agriculteurs s'inquiètent d'un printemps anormalement sec."),
+      E("Investissement étranger majeur",-2,0,2,"","Une multinationale construit une grande usine sur votre territoire.","Une multinationale chercherait un site pour construire une grande usine au pays."),
+      E("Cyberattaque bancaire",1,0,-2,"","Une cyberattaque paralyse les paiements pendant plusieurs jours.","Des experts en sécurité informatique signalent une hausse des tentatives d'intrusion contre les banques."),
+      E("Fermeture d'un grand employeur",2,0,-1,"","Le plus grand employeur d'une région ferme ses portes.","Des rumeurs circulent sur les difficultés financières d'un des plus grands employeurs du pays.")
+    ],
+    cons:{
+      A:[
+        K("Érosion du pouvoir d'achat",0,0,-2,3,1,"L'inflation galopante réduit le pouvoir d'achat des ménages, entraînant une baisse de la consommation et une montée du mécontentement social."),
+        K("Fuite des investisseurs",2,0,-2,1,3,"Les investisseurs fuient un climat économique imprévisible, et les entreprises limitent leurs projets à cause de l'instabilité des coûts."),
+        K("Grève contre le coût de la vie",0,1,-1,3,0,"Les travailleurs réclament des augmentations pour compenser la hausse des prix, ce qui alimente à son tour l'inflation."),
+        K("Diminution importante des exportations",1,0,-2,3,0,"L'inflation élevée rend vos produits trop chers sur le marché international. Les commandes étrangères s'effondrent, mettant en péril les industries exportatrices."),
+        K("Effondrement de l'épargne",0,0,-2,2,2,"Face à l'inflation, les ménages puisent dans leur épargne pour compenser la hausse des prix, ce qui réduit les capitaux disponibles pour investir."),
+        K("Instabilité politique",0,0,0,6,0,"L'inflation galopante provoque une vague de mécontentement populaire qui menace la stabilité du gouvernement.")
+      ],
+      B:[
+        K("Paralysie de la consommation",1,0,-2,1,1,"Les consommateurs reportent leurs achats en espérant des prix encore plus bas, ce qui ralentit l'économie et freine la création d'emplois."),
+        K("Poids de la dette",0,0,-2,3,2,"En période de déflation, la valeur réelle des dettes augmente, ce qui pèse sur les ménages et les entreprises."),
+        K("Spirale déflationniste",2,0,-2,1,0,"Les prix qui baissent en continu provoquent une réduction de la production et des salaires, ce qui amplifie la récession."),
+        K("Faillites en chaîne",2,0,-5,1,1,"Des prix stagnants ou en baisse réduisent les marges des entreprises, qui ferment ou licencient massivement."),
+        K("Ralentissement des investissements",0,-2,-5,0,2,"En période de déflation, les perspectives de profit diminuent et les investisseurs renoncent aux nouveaux projets."),
+        K("Piège de liquidité",1,-1,-2,1,2,"Des taux d'intérêt déjà très bas ne stimulent plus l'économie : les décideurs sont piégés et la stagnation se prolonge.")
+      ],
+      C:[
+        K("Crise sociale",0,0,-1,3,0,"Le chômage massif provoque des tensions sociales, des manifestations et une baisse de confiance dans les institutions publiques."),
+        K("Effondrement de la consommation",1,0,-2,2,1,"Un chômage élevé réduit le pouvoir d'achat et paralyse l'économie, entraînant une récession prolongée."),
+        K("Migration de la main-d'œuvre",-2,0,-4,0,1,"Face à un chômage persistant, les travailleurs qualifiés quittent le pays à la recherche de meilleures occasions."),
+        K("Augmentation de la criminalité",0,0,-1,3,2,"Le chômage élevé pousse une partie de la population vers des activités illégales, ce qui augmente les tensions sociales."),
+        K("Déclin des compétences professionnelles",1,1,-4,0,0,"Un chômage prolongé érode les compétences des travailleurs, ce qui rend leur retour sur le marché du travail plus difficile."),
+        K("Exode de centres de recherche",1,0,-4,1,1,"Face à la dégradation de l'économie, des entreprises et des centres de recherche déplacent leurs activités vers des régions plus dynamiques."),
+        K("Explosion des inégalités",0,0,-1,3,0,"Le chômage prolongé frappe surtout les travailleurs les moins qualifiés, et l'écart se creuse avec ceux qui conservent un bon emploi.")
+      ],
+      D:[
+        K("Pénurie de main-d'œuvre",0,3,0,0,1,"Le marché du travail est saturé et les entreprises peinent à recruter, ce qui provoque une flambée des salaires et des prix."),
+        K("Surmenage et mécontentement",0,0,-1,1,1,"Les travailleurs en poste sont surchargés, ce qui entraîne une baisse de productivité et des mouvements sociaux."),
+        K("Inflation salariale",2,2,0,1,0,"Un marché du travail trop tendu provoque une course aux salaires qui alimente l'inflation et force certaines entreprises à réduire leurs activités."),
+        K("Surcharge des infrastructures",0,2,0,0,2,"Un marché du travail trop tendu exerce une pression sur les infrastructures publiques et privées, ce qui fait grimper les coûts."),
+        K("Afflux rapide de main-d'œuvre",1,1,2,0,2,"Pour combler la pénurie, le pays accueille rapidement de nombreux travailleurs : la production augmente, mais le logement et les services publics peinent à suivre.")
+      ]
+    }
+  };
+}
+function defaultSettings(){return {names:DEF_NAMES.slice(),rounds:10,publicVotes:false,timerMin:4,label:"",urgentTokens:2,probs:[30,50,70]}}
+
+/* ========== Moteur du jeu ========== */
+function applyFx(s,o){
+  s.ch=r1(Math.max(0,s.ch+(+o.ch||0)));s.inf=r1(s.inf+(+o.inf||0));s.cr=r1(s.cr+(+o.cr||0));
+  s.pop+=(+o.pop||0);s.fin+=(+o.fin||0);
+}
+function fxText(o,lagInf){
+  const p=[];
+  if(+o.ch)p.push("chômage "+sgn(o.ch));
+  if(+o.def)p.push("inflation "+(+o.inf?sgn(o.inf)+" tout de suite, puis ":"")+sgn(o.def)+" au tour suivant");
+  else if(+o.inf)p.push("inflation "+sgn(o.inf)+(lagInf?" au tour suivant":""));
+  if(+o.cr)p.push("croissance "+sgn(o.cr));
+  if(+o.pop)p.push("popularité −"+fmt(o.pop));
+  if(+o.fin)p.push("finances −"+fmt(o.fin));
+  const t=p.join(", ");return t?t.charAt(0).toUpperCase()+t.slice(1):"Aucun effet";
+}
+function tally(votes,policies){
+  const t={};policies.forEach(p=>t[p.id]=0);votes.forEach(v=>{if(t[v.policy]!=null)t[v.policy]++});
+  const n=votes.length;let win=null;
+  for(const [k,c] of Object.entries(t))if(n>0&&c>n/2)win=k;
+  return {t,n,win};
+}
+function runRound(s0,policy,paralysis,decks,given){
+  const s=clone(s0),log=[],cons=[];
+  const before={ch:s.ch,inf:s.inf,cr:s.cr,pop:s.pop,fin:s.fin};
+  if(s.pend){log.push("Effet différé de la politique monétaire du tour précédent : inflation "+sgn(s.pend)+".");s.inf=r1(s.inf+s.pend);s.pend=0;}
+  if(paralysis){s.pop+=1;log.push("Aucune politique n'obtient plus de 50 % des votes : le gouvernement est paralysé (popularité −1).");}
+  else if(policy){
+    const o=Object.assign({},policy);let pend=0;
+    if(policy.lag&&+policy.inf){pend=r1(+policy.inf);o.inf=0;}
+    if(+policy.def)pend=r1(pend+(+policy.def));
+    if(pend)s.pend=pend;
+    applyFx(s,o);log.push((policy.urgent?"Mesure d'urgence adoptée : ":"Politique adoptée : ")+policy.name+". "+fxText(policy,policy.lag)+".");
+  }
+  const ev=given?clone(given):(decks.events.length?clone(pick(decks.events)):null);
+  if(ev){applyFx(s,ev);log.push("Événement : "+ev.name+". "+fxText(ev)+(ev.flag?". "+FLAGS[ev.flag]:"")+".");}
+  const fl=ev?ev.flag:"";
+  const draw=(cat,k,why)=>{for(let i=0;i<k;i++){const list=decks.cons[cat]||[];if(!list.length)return;const c=clone(pick(list));c.cat=cat;c.why=why;applyFx(s,c);cons.push(c);log.push("Carte "+cat+" ("+why+") : "+c.name+". "+fxText(c)+".");}};
+  if(s.inf>4){
+    if(fl==="noA")log.push("Inflation à "+pct(s.inf)+", mais l'événement annule la carte A ce tour.");
+    else draw("A",fl==="2A"?2:1,"inflation à "+pct(s.inf));
+  } else if(s.inf<0){
+    draw("B",(s.inf<-5?2:1)*(fl==="2B"?2:1),"inflation à "+pct(s.inf));
+  } else log.push("Inflation à "+pct(s.inf)+" : dans la zone sans conséquence.");
+  if(s.ch>7)draw("C",fl==="2C"?2:1,"chômage à "+pct(s.ch));
+  else if(s.ch<4)draw("D",fl==="2D"?2:1,"chômage à "+pct(s.ch));
+  else log.push("Chômage à "+pct(s.ch)+" : dans la zone sans conséquence.");
+  if(s.cr>3){s.ch=r1(Math.max(0,s.ch-1));log.push("Croissance à "+pct(s.cr)+" (au-dessus de 3 %) : chômage −1.");}
+  else if(s.cr<0){s.ch=r1(s.ch+1);log.push("Croissance à "+pct(s.cr)+" (négative) : chômage +1.");}
+  const b={inf:s.inf,ch:s.ch,cr:s.cr};
+  const step=(x,n)=>x>n?r1(Math.max(n,x-1)):x<n?r1(Math.min(n,x+1)):x;
+  s.inf=step(s.inf,2);s.ch=step(s.ch,6);s.cr=r1(s.cr/2);
+  if(b.inf!==s.inf||b.ch!==s.ch||b.cr!==s.cr)log.push("Retour vers la normale : inflation "+pct(b.inf)+" → "+pct(s.inf)+", chômage "+pct(b.ch)+" → "+pct(s.ch)+", croissance "+pct(b.cr)+" → "+pct(s.cr)+".");
+  return {s,log,cons,event:ev,before,after:{ch:s.ch,inf:s.inf,cr:s.cr,pop:s.pop,fin:s.fin}};
+}
+const score=c=>(c.pop||0)*(c.fin||0);
+
+/* ========== État ========== */
+let db=null,B=null,uid=null,isOwner=false,fatalMsg=null,readOnly=false,ME=null,booted=false;
+let G=null,DK=null,CT=null,AS=null,BL=null,PLAN=null,P=[],V=[],RD=[],AR=[];
+let subSid=null,unsubV=null,unsubR=null;
+const TAB=newId();
+const ui={tab:"partie",sel:null,urg:false,why:"",selRound:null,min:"",armed:null,profs:{},profKey:"",wall:false,pn:{}};
+const view=()=>location.hash==="#affichage"||ui.wall?"wall":isOwner?"admin":"student";
+const S=()=>G?G.settings||defaultSettings():defaultSettings();
+const cname=i=>(S().names||DEF_NAMES)[i]||DEF_NAMES[i];
+let dkMemo=null,dkSrc=undefined;
+function decks(){
+  if(dkSrc===DK&&dkMemo)return dkMemo;
+  const dd=defaultDecks();let d=DK&&DK.policies?clone(DK):dd;
+  if(!d.urgent)d.urgent=dd.urgent;
+  d.events.forEach(e=>{if(e.bulletin==null){const m=dd.events.find(x=>x.name===e.name);e.bulletin=m?m.bulletin:"Les économistes évoquent un risque : "+e.name.toLowerCase()+"."}});
+  dkSrc=DK;dkMemo=d;return d;
+}
+const urgentFor=pid=>decks().urgent.find(u=>u.base===pid);
+const tokensLeft=c=>CT&&CT.list[c]?Math.max(0,(S().urgentTokens??2)-(CT.list[c].urg||0)):0;
+const bulletin=c=>BL&&G&&BL.session===G.session&&BL.round===G.round?BL.list[c]:null;
+const joined=()=>G?P.filter(p=>p.session===G.session):[];
+const countryOf=id=>AS&&G&&AS.session===G.session&&AS.map?AS.map[id]:undefined;
+const playersIn=c=>joined().filter(p=>countryOf(p.id)===c);
+const roundDoc=(r,c)=>G?RD.find(x=>x.round===r&&x.country===c):null;
+const votesIn=(r,c)=>{const ids=new Set(playersIn(c).map(p=>p.id));return V.filter(v=>v.round===r&&ids.has(v.by))};
+const isLive=()=>G&&G.status==="vote"&&(!G.endsAt||Date.now()<G.endsAt);
+const allResolved=()=>G&&[0,1,2,3,4,5].every(c=>roundDoc(G.round,c));
+
+/* ========== Rendu par régions ========== */
+let skel=null;const cache={};
+function skeleton(k,html){if(skel!==k){skel=k;$("#app").innerHTML=html;for(const x in cache)delete cache[x]}}
+function put(id,html){const el=document.getElementById(id);if(!el||cache[id]===html)return;
+  const a=document.activeElement,fid=a&&el.contains(a)&&a.id?a.id:null,ss=fid&&a.selectionStart!=null?[a.selectionStart,a.selectionEnd]:null;
+  cache[id]=html;el.innerHTML=html;
+  if(fid){const n=document.getElementById(fid);if(n){n.focus();if(ss)try{n.setSelectionRange(ss[0],ss[1])}catch(e){}}}}
+
+/* ========== Composants ========== */
+const GA={inf:{lab:"Inflation",min:-8,max:12,lo:0,hi:4,note:"Sans conséquence de 0 à 4 %"},ch:{lab:"Chômage",min:0,max:20,lo:4,hi:7,note:"Sans conséquence de 4 à 7 %"},cr:{lab:"Croissance",min:-10,max:10,lo:0,hi:3,note:"Sous 0 % : chômage +1. Au-dessus de 3 % : chômage −1"}};
+function gauge(k,v,compact){
+  const g=GA[k],pos=x=>Math.max(0,Math.min(100,(x-g.min)/(g.max-g.min)*100));
+  let st=v>=g.lo&&v<=g.hi?"ok":"bad";if(k==="cr")st=v>g.hi?"ok":v<0?"bad":"warn";
+  return '<div class="gauge '+st+'"><div class="lab"><span>'+g.lab+'</span><span class="val">'+pct(v)+'</span></div>'+
+    '<div class="track" aria-hidden="true"><div class="zone" style="left:'+pos(g.lo)+'%;width:'+(pos(g.hi)-pos(g.lo))+'%"></div><div class="mark" style="left:'+pos(v)+'%"></div></div>'+
+    (compact?'':'<p class="small muted" style="margin:.15rem 0 0">'+g.note+'</p>')+'</div>';
+}
+function scoreBox(c,big){
+  return '<div class="scorebox"><span class="muted small">Popularité perdue</span><span class="num">'+c.pop+'</span><span class="muted">×</span><span class="muted small">finances perdues</span><span class="num">'+c.fin+'</span><span class="muted">=</span><span class="num '+(big?"big":"")+'">'+score(c)+'</span><span class="muted small">points</span></div>';
+}
+function consCard(c){return '<div class="card '+c.cat+'"><b>Carte '+c.cat+' : '+esc(c.name)+'</b><div class="fx">'+esc(fxText(c))+' ('+esc(c.why)+')</div><p class="small">'+esc(c.desc)+'</p></div>'}
+function eventCard(e){return e?'<div class="card ev"><b>Événement : '+esc(e.name)+'</b><div class="fx">'+esc(fxText(e))+(e.flag?'. '+esc(FLAGS[e.flag]):'')+'</div><p class="small">'+esc(e.desc)+'</p></div>':''}
+function bulletinHTML(c){const b=bulletin(c);return b?'<div class="bulletin"><span class="small muted">Bulletin des économistes</span><p>« '+esc(b.text)+' »</p><p class="small"><b>Probabilité estimée : '+b.p+' %</b></p></div>':''}
+function bulletinResult(rd){const b=rd.bulletin;return b?'<p class="small" style="margin:.3rem 0">Bulletin ('+b.p+' %) : « '+esc(b.text)+' » '+(b.real?'<b>La prévision s\'est réalisée.</b>':'<b>Fausse alerte :</b> la prévision ne s\'est pas réalisée.')+'</p>':''}
+function urgentQ(c,live){
+  const u=ui.sel?urgentFor(ui.sel):null,left=tokensLeft(c),tot=S().urgentTokens??2;
+  if(!ui.sel||!u||!tot)return '';
+  if(left<=0)return '<p class="small muted" style="margin-top:.6rem">Ton pays a utilisé toutes ses mesures d\'urgence.</p>';
+  return '<div class="urgq"><p><b>Déclencher une mesure d\'urgence ?</b> <span class="small muted">'+left+' sur '+tot+' restante'+(left>1?'s':'')+'</span></p><p class="small">Version d\'urgence : <b>'+esc(u.name)+'</b>. '+esc(fxText(u))+'.</p>'+
+    '<div class="row" style="margin-top:.3rem"><button class="btn small'+(ui.urg?'':' ghost')+'" data-act="urg" data-v="1" aria-pressed="'+ui.urg+'"'+(live?'':' disabled')+'>Oui</button><button class="btn small'+(ui.urg?' ghost':'')+'" data-act="urg" data-v="0" aria-pressed="'+(!ui.urg)+'"'+(live?'':' disabled')+'>Non</button></div>'+
+    '<p class="small muted">Elle s\'applique si cette politique est adoptée et que plus de 50 % des votants de ton pays répondent oui.</p></div>';
+}
+function tallyHTML(rd,withNames){
+  const pol=decks().policies,max=Math.max(1,...Object.values(rd.tally||{}));
+  let h='<div class="tally">'+pol.map(p=>{const n=(rd.tally||{})[p.id]||0;return '<div><span style="min-width:9rem">'+esc(p.short||p.name)+'</span><i style="width:'+(n/max*8)+'rem"></i><span class="num">'+n+'</span></div>'}).join("")+'</div>';
+  if(withNames&&rd.ballots&&rd.ballots.length)h+=rd.ballots.map(b=>'<p class="why"><b>'+esc(b.pseudo)+'</b> ('+esc(b.short)+') : '+esc(b.why)+'</p>').join("");
+  return h;
+}
+function resultHTML(rd,c,withNames){
+  let h='<h3>Tour '+rd.round+' : '+(rd.paralysis?"gouvernement paralysé":esc(rd.policyName))+(rd.urgent?' <span class="pill" style="color:var(--bad)">Mesure d\'urgence</span>':'')+'</h3>';
+  h+='<p class="small muted">'+rd.voters+' vote'+(rd.voters>1?"s":"")+' sur '+rd.players+(rd.forced?" (décompte forcé)":"")+'.</p>';
+  if(S().publicVotes||withNames)h+=tallyHTML(rd,true);
+  h+=bulletinResult(rd)+eventCard(rd.event)+(rd.cons||[]).map(consCard).join("")+(rd.cons&&rd.cons.length?"":'<p class="small muted">Aucune carte de conséquence ce tour.</p>');
+  h+='<details><summary class="small">Déroulement complet du tour</summary><ol class="steps">'+(rd.log||[]).map(l=>'<li>'+esc(l)+'</li>').join("")+'</ol></details>';
+  return h;
+}
+const IC={inf:"var(--c4)",ch:"var(--c1)",cr:"var(--c0)"};
+function chart(hist,rounds){
+  const W=420,H=200,m={l:34,r:10,t:10,b:24},N=Math.max(rounds,(hist.length||1)-1);
+  const vals=hist.flatMap(h=>[h.inf,h.ch,h.cr]);const lo=Math.min(-4,...vals),hi=Math.max(10,...vals);
+  const ymin=Math.floor(lo/2)*2,ymax=Math.ceil(hi/2)*2;
+  const x=i=>m.l+i*(W-m.l-m.r)/Math.max(1,N),y=v=>H-m.b-(v-ymin)*(H-m.t-m.b)/(ymax-ymin);
+  let g='';const stepY=ymax-ymin>24?6:ymax-ymin>12?4:2;
+  for(let v=ymin;v<=ymax;v+=stepY)g+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--rule)"'+(v===0?' stroke-width="1.5"':'')+'/><text x="'+(m.l-5)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v+'</text>';
+  for(let i=0;i<=N;i++)g+='<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle">'+i+'</text>';
+  for(const k of ["inf","ch","cr"]){if(hist.length<2)continue;g+='<polyline fill="none" stroke="'+IC[k]+'" stroke-width="2.5" points="'+hist.map((h,i)=>x(i)+","+y(h[k])).join(" ")+'"/>';}
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Évolution des indicateurs par tour">'+g+'</svg>';
+}
+const legend='<div class="legend"><span style="--lc:'+IC.inf+'">Inflation</span><span style="--lc:'+IC.ch+'">Chômage</span><span style="--lc:'+IC.cr+'">Croissance</span></div>';
+function polStrip(hist){return '<div class="chips">'+hist.slice(1).map(h=>'<span class="chip">T'+h.r+' '+esc(h.pol||"")+'</span>').join("")+'</div>'}
+function ranking(){
+  if(!CT)return[];
+  return CT.list.map((c,i)=>({i,c,sc:score(c)})).sort((a,b)=>a.sc-b.sc||a.c.pop-b.c.pop).map((x,k)=>Object.assign(x,{rank:k+1}));
+}
+
+/* ========== Connexion (Firebase) ========== */
+function fatal(m){fatalMsg=m;$("#app").innerHTML='<div class="center"><p class="big">Impossible d\'ouvrir le jeu</p><p>'+esc(m)+'</p></div>';$("#status").textContent=""}
+function onErr(e){console.warn(e);if(e&&e.code==="resource-exhausted")toast("Le quota gratuit quotidien de Firebase est atteint. Le jeu reprendra demain.")}
+function writeErr(e){
+  console.warn(e);
+  if(e&&e.code==="permission-denied")toast(isOwner?"Écriture refusée : vérifie ton UID dans les règles Firestore.":"Action refusée.");
+  else if(e&&e.code==="resource-exhausted")toast("Le quota gratuit quotidien de Firebase est atteint. Le jeu reprendra demain.");
+  else toast("L'action n'a pas abouti. Réessaie dans quelques secondes.");
+}
+function showLogin(msg){
+  fatalMsg=null;skel=null;$("#status").textContent="Connexion enseignant";
+  $("#app").innerHTML='<div class="panel" style="max-width:26rem;margin:2rem auto"><h2>Connexion enseignant</h2>'+(msg?'<p style="color:var(--bad)">'+esc(msg)+'</p>':'')+
+    '<label class="f">Courriel<input type="text" id="lg-mail" autocomplete="username"></label><label class="f">Mot de passe<input type="password" id="lg-pw" autocomplete="current-password" style="display:block;width:100%;margin-top:.2rem;background:var(--sunk);border:1px solid var(--rule);border-radius:4px;padding:.45rem .6rem"></label>'+
+    '<button class="btn" id="lg-go">Se connecter</button><p class="small muted" style="margin-top:.8rem">Les étudiant·es n\'ont pas besoin de se connecter : ils utilisent le lien sans #admin.</p></div>';
+  const go=()=>{const m=$("#lg-mail").value.trim(),p=$("#lg-pw").value;if(!m||!p)return;$("#lg-go").disabled=true;ui.triedLogin=true;
+    B.login(m,p).catch(e=>showLogin(e&&(e.code==="auth/invalid-credential"||e.code==="auth/wrong-password"||e.code==="auth/user-not-found")?"Courriel ou mot de passe incorrect.":"Connexion impossible ("+((e&&e.code)||"erreur")+")."))};
+  $("#lg-go").onclick=go;$("#lg-pw").onkeydown=e=>{if(e.key==="Enter")go()};
+}
+function start(){
+  B=window.GOV_BACKEND;
+  if(!B||B.error)return fatal("Le jeu n'est pas encore configuré : il manque les informations Firebase ou l'UID de l'enseignant dans le fichier index.html.");
+  db=B.db;
+  B.onAuth(u=>{
+    if(booted){location.reload();return}
+    uid=u;isOwner=!!u&&u===B.adminUid;
+    if(location.hash==="#admin"&&!isOwner){showLogin(u&&u!==B.adminUid&&ui.triedLogin?"Ce compte n'est pas celui de l'enseignant.":"");return}
+    if(!u){B.anon().catch(e=>fatal("Connexion impossible ("+((e&&e.code)||"erreur")+"). Vérifie que la connexion anonyme est activée dans Firebase."));return}
+    boot();
+  });
+}
+function boot(){
+  booted=true;
+  db.doc("game/state").onSnapshot(s=>{G=s.exists?s.data():null;rewire();render();autoRun()},onErr);
+  db.doc("game/decks").onSnapshot(s=>{DK=s.exists?s.data():null;render()},onErr);
+  db.doc("game/countries").onSnapshot(s=>{CT=s.exists?s.data():null;render()},onErr);
+  db.doc("game/assign").onSnapshot(s=>{AS=s.exists?s.data():null;rewire();render();autoRun()},onErr);
+  db.doc("game/bulletins").onSnapshot(s=>{BL=s.exists?s.data():null;render()},onErr);
+  if(isOwner){
+    db.doc("secret/plan").onSnapshot(s=>{PLAN=s.exists?s.data():null;render()},onErr);
+    db.collection("archive").onSnapshot(q=>{AR=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},onErr);
+  } else db.doc("players/"+uid).onSnapshot(s=>{ME=s.exists?Object.assign({id:uid},s.data()):null;render()},onErr);
+  window.addEventListener("hashchange",()=>{if(location.hash==="#admin"&&!isOwner){location.reload();return}skel=null;rewire();render()});
+  setInterval(tick,500);render();
+}
+if(window.GOV_BACKEND)start();else window.addEventListener("gov-backend",start,{once:true});
+/* Abonnements ciblés : chaque écran ne lit que ce dont il a besoin. */
+const subs={};
+function sub(name,key,make,clear){
+  if(subs[name]&&subs[name].key===key)return;
+  if(subs[name])subs[name].off();clear();
+  subs[name]={key,off:key==null?()=>{}:make()};
+}
+function rewire(){
+  if(!db)return;
+  const sid=G?G.session:null,r=G?G.round:0,student=view()==="student",c=student?countryOf(uid):"all";
+  sub("players",sid,()=>db.collection("players").where("session","==",sid).onSnapshot(q=>{P=q.docs.map(d=>Object.assign({id:d.id},d.data()));render();autoRun()},onErr),()=>{P=[]});
+  const rk=sid&&c!==undefined?sid+"|"+c:null;
+  sub("rounds",rk,()=>{let q=db.collection("rounds").where("session","==",sid);if(student)q=q.where("country","==",c);return q.onSnapshot(x=>{RD=x.docs.map(d=>Object.assign({id:d.id},d.data()));render();autoRun()},onErr)},()=>{RD=[]});
+  const vk=sid&&r&&c!==undefined?sid+"|"+r+"|"+c:null;
+  sub("votes",vk,()=>{let q=db.collection("votes").where("session","==",sid).where("round","==",r);if(student)q=q.where("country","==",c);return q.onSnapshot(x=>{V=x.docs.map(d=>Object.assign({id:d.id},d.data()));render();autoRun()},onErr)},()=>{V=[]});
+}
+let lastLive=null,expiring=false;
+function tick(){
+  const el=$("#timer");
+  if(G&&G.status==="vote"&&G.endsAt){const s=Math.ceil(Math.max(0,G.endsAt-Date.now())/1000);el.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");el.classList.toggle("low",s<=30)}
+  else{el.textContent="";el.classList.remove("low")}
+  const l=isLive();if(l!==lastLive){lastLive=l;render()}
+  if(isOwner&&G&&G.status==="vote"&&G.endsAt&&Date.now()>G.endsAt&&!expiring){expiring=true;forceAll().finally(()=>{expiring=false})}
+}
+
+/* ========== Moteur côté enseignant ========== */
+let queue=Promise.resolve();const inFlight=new Set();
+function enqueue(c,forced){
+  if(!G||G.status!=="vote"||roundDoc(G.round,c))return;
+  const sid=G.session,r=G.round,key=sid+"_"+r+"_"+c;if(inFlight.has(key))return;inFlight.add(key);
+  queue=queue.then(()=>resolveCountry(c,forced,sid,r)).catch(writeErr).finally(()=>inFlight.delete(key));
+  return queue;
+}
+async function resolveCountry(c,forced,sid,r){
+  if(!G||G.session!==sid||G.round!==r||G.status!=="vote")return;
+  const rid=sid+"_"+r+"_"+c,dk=decks(),votes=votesIn(r,c),t=tally(votes,dk.policies),nPlayers=playersIn(c).length;
+  const pseudo=id=>(P.find(p=>p.id===id)||{}).pseudo||"?";
+  const ballots=votes.map(v=>{const p=dk.policies.find(x=>x.id===v.policy);return {pseudo:pseudo(v.by),short:(p?(p.short||p.name):"?")+(v.urg?", urgence : oui":""),why:v.why||""}});
+  const yes=votes.filter(v=>v.urg).length,tokens=S().urgentTokens??2;
+  await db.tx(async tx=>{
+    const rs=await tx.get("rounds/"+rid);if(rs.exists)return;
+    const cs=await tx.get("game/countries");if(!cs.exists)return;
+    const ps=await tx.get("secret/plan");
+    const all=clone(cs.data());if(all.session!==sid)return;
+    let pol=t.win?dk.policies.find(p=>p.id===t.win):null;
+    const u=pol?dk.urgent.find(x=>x.base===pol.id):null,left=Math.max(0,tokens-(all.list[c].urg||0)),useUrg=!!(u&&left>0&&yes>t.n/2);
+    if(useUrg)pol=Object.assign({},u,{urgent:true,lag:false});
+    const plan=ps.exists?ps.data():null;let ev=null,bl=null;
+    if(plan&&plan.session===sid){const o=plan.order[c]||plan.order[String(c)];ev=plan.events[o[(r-1)%o.length]];bl=(plan.bulletins||{})[r]?plan.bulletins[r][c]:null}
+    const res=runRound(all.list[c],pol,!pol,dk,ev);
+    if(bl)res.log.unshift("Bulletin des économistes ("+bl.p+" %) : "+bl.text+" "+(bl.real?"La prévision s'est réalisée.":"La prévision ne s'est pas réalisée."));
+    const st=res.s;if(useUrg)st.urg=(st.urg||0)+1;
+    st.hist=(st.hist||[]).concat([{r,ch:st.ch,inf:st.inf,cr:st.cr,pop:st.pop,fin:st.fin,pol:pol?(pol.short||pol.name):"Paralysie"}]);
+    tx.set("rounds/"+rid,{session:sid,round:r,country:c,policy:pol?pol.id:null,policyName:pol?pol.name:"",paralysis:!pol,forced:!!forced,
+      tally:t.t,voters:t.n,players:nPlayers,ballots,urgent:useUrg,urgYes:yes,bulletin:bl?{text:bl.text,p:bl.p,real:!!bl.real}:null,
+      event:res.event,cons:res.cons,log:res.log,before:res.before,after:res.after,pend:st.pend||0,ts:Date.now()});
+    all.list[c]=st;tx.set("game/countries",all);
+  });
+}
+function autoRun(){
+  if(!isOwner||!G)return;
+  if(G.status==="vote")for(let c=0;c<6;c++){if(roundDoc(G.round,c))continue;const n=playersIn(c).length;if(n>0&&votesIn(G.round,c).length>=n)enqueue(c,false)}
+  if(G.status!=="over"&&AS&&AS.session===G.session&&AS.done){
+    const late=joined().filter(p=>AS.map[p.id]===undefined);
+    if(late.length&&!autoRun.busy){autoRun.busy=true;const map=Object.assign({},AS.map);
+      late.forEach(p=>{const cnt=[0,1,2,3,4,5].map(c=>Object.values(map).filter(x=>x===c).length);map[p.id]=cnt.indexOf(Math.min(...cnt))});
+      db.doc("game/assign").update({map}).catch(writeErr).finally(()=>{autoRun.busy=false})}
+  }
+}
+async function forceAll(){for(let c=0;c<6;c++)if(!roundDoc(G.round,c))await enqueue(c,true)}
+
+/* ========== Rendu général ========== */
+function render(){
+  if(fatalMsg)return;
+  let st="Aucune partie en cours";
+  if(G){const N=S().rounds;
+    if(G.status==="lobby")st="Inscriptions ouvertes";
+    else if(G.status==="vote")st=allResolved()?"Tour "+G.round+" sur "+N+" : résultats":isLive()?"Tour "+G.round+" sur "+N+" : vote en cours":"Tour "+G.round+" sur "+N+" : vote terminé";
+    else if(G.status==="over")st="Partie terminée";
+    if(S().label)st=S().label+". "+st;}
+  $("#status").textContent=st;
+  const v=view();if(v==="wall")renderWall();else if(v==="admin")renderAdmin();else renderStudent();
+}
+
+/* ----- Étudiant ----- */
+function renderStudent(){
+  if(!G){skeleton("wait",'<div class="center"><p class="big">La partie n\'est pas encore ouverte</p><p class="muted">Garde cette page ouverte : elle s\'actualisera toute seule.</p></div>');return}
+  const me=ME||P.find(p=>p.id===uid);
+  if(!me||me.session!==G.session){
+    skeleton("join",'<div class="panel" style="max-width:30rem;margin:2rem auto"><h2>Rejoindre la partie</h2><p class="muted">Ton prénom servira à ton enseignant pour suivre la participation. Utilise toujours le même appareil et le même navigateur pendant la partie.</p><div class="row" style="margin-top:.8rem"><input id="pseudo" type="text" maxlength="24" autocomplete="off" aria-label="Prénom"><button class="btn" data-act="join">Rejoindre</button></div><div id="j-msg"></div></div>');
+    const i=$("#pseudo");if(i&&!i.value&&me)i.value=me.pseudo||"";
+    put("j-msg","");return;
+  }
+  const c=countryOf(uid);
+  if(c===undefined||!CT){skeleton("waitc",'<div class="center"><p class="big">Bienvenue, <span id="w-n"></span></p><p class="muted">Ton enseignant va bientôt te placer dans un pays.</p></div>');$("#w-n").textContent=me.pseudo;return}
+  if(G.status==="over")return studentOver(c);
+  skeleton("play",'<div class="grid g2"><div><div class="panel" id="s-country"></div><div class="panel" id="s-prev"></div></div><div><div class="panel" id="s-vote"></div></div></div>');
+  const cs=CT.list[c],dk=decks();
+  put("s-country",'<div class="cname"><span class="flag" style="--cc:var(--c'+c+')"></span><h2 style="margin:0">'+esc(cname(c))+'</h2></div><p class="small muted">Ton équipe : '+playersIn(c).map(p=>esc(p.pseudo)).join(", ")+'</p>'+
+    gauge("inf",cs.inf)+gauge("ch",cs.ch)+gauge("cr",cs.cr)+(cs.pend?'<p class="small" style="color:var(--warn)"><b>Effet à venir au prochain tour :</b> inflation '+sgn(cs.pend)+' (politique monétaire).</p>':'')+((S().urgentTokens??2)?'<p class="small">Mesures d\'urgence restantes : <b>'+tokensLeft(c)+' sur '+(S().urgentTokens??2)+'</b></p>':'')+scoreBox(cs,true)+
+    '<p class="small muted">Le but : perdre le moins de points possible. Le score multiplie la popularité perdue par les finances perdues.</p>');
+  const rd=roundDoc(G.round,c),prev=roundDoc(G.round-1,c);
+  put("s-prev",prev&&!rd?'<h3>Tour précédent</h3>'+resultHTML(prev,c,false):rd?'<p class="small muted">Les résultats du tour '+G.round+' sont affichés à droite.</p>':'<p class="small muted">Les résultats de chaque tour s\'afficheront ici.</p>');
+  let h;
+  if(rd)h=resultHTML(rd,c,false)+(G.round<S().rounds?'<p class="small muted" style="margin-top:.6rem">En attente du prochain tour.</p>':'');
+  else if(G.status==="lobby")h='<p class="muted">La partie va commencer. Prends connaissance des indicateurs de ton pays.</p>';
+  else{
+    const mine=V.find(v=>v.round===G.round&&v.by===uid),live=isLive()&&!readOnly,n=votesIn(G.round,c).length,m=playersIn(c).length;
+    if(ui.selRound!==G.round){ui.selRound=G.round;ui.sel=mine?mine.policy:null;ui.urg=mine?!!mine.urg:false;ui.why=mine?(mine.why||""):""}
+    h='<h2>Tour '+G.round+' : votre politique</h2>'+bulletinHTML(c)+'<p class="small muted">Une politique doit obtenir plus de 50 % des votes de ton pays, sinon le gouvernement est paralysé (popularité −1).</p><div class="pols">'+
+      dk.policies.map(p=>'<button class="pol" data-act="sel" data-p="'+esc(p.id)+'" aria-pressed="'+(ui.sel===p.id)+'"'+(live?'':' disabled')+'><b>'+esc(p.name)+'</b><span>'+esc(fxText(p,p.lag))+'</span></button>').join("")+'</div>'+urgentQ(c,live)+
+      '<label class="f" for="why" style="margin-top:.8rem">Ton objectif : pourquoi ce choix ?</label><textarea id="why" maxlength="280"'+(live?'':' disabled')+' placeholder="Ex. : l\'inflation va dépasser 4 %, il faut la freiner avant qu\'elle ne déclenche une carte A.">'+esc(ui.why)+'</textarea>'+
+      '<div class="row" style="margin-top:.6rem"><button class="btn" data-act="vote"'+(live?'':' disabled')+'>'+(mine?"Modifier mon vote":"Voter")+'</button><span class="small muted grow">'+n+' vote'+(n>1?"s":"")+' reçu'+(n>1?"s":"")+' sur '+m+' dans ton pays.</span></div>'+
+      (mine?'<p class="small" style="margin-top:.4rem">Ton vote : <b>'+esc((dk.policies.find(p=>p.id===mine.policy)||{}).name||"")+'</b>'+(mine.urg?', avec mesure d\'urgence':'')+'. Tu peux le modifier jusqu\'au décompte.</p>':'')+
+      (!isLive()&&!readOnly?'<p class="small" style="color:var(--warn)">Le vote est fermé : le décompte est en cours.</p>':'')+(readOnly?'<p class="small" style="color:var(--bad)">Ton accès est en lecture seule : tu ne peux pas voter.</p>':'');
+  }
+  put("s-vote",h);
+}
+function studentOver(c){
+  skeleton("over",'<div class="panel" id="o-res"></div>');
+  const rk=ranking(),me=rk.find(x=>x.i===c);
+  put("o-res",'<h2>Partie terminée</h2><p>'+esc(cname(c))+' termine au rang '+me.rank+' sur 6, avec '+me.sc+' points.</p>'+chart(CT.list[c].hist||[],S().rounds)+legend+polStrip(CT.list[c].hist||[])+
+    '<h3 style="margin-top:1rem">Classement</h3><table><tbody>'+rk.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(cname(x.i))+'</td><td class="r num">'+x.sc+'</td></tr>').join("")+'</tbody></table>');
+}
+
+/* ----- Affichage projeté ----- */
+function renderWall(){
+  skeleton("wall",'<div id="w-top"></div><div class="wall" id="w-grid"></div><div id="w-end"></div>');
+  if(!G||!CT){put("w-top",'<div class="center"><p class="big">En attente du lancement de la partie</p></div>');put("w-grid","");put("w-end","");return}
+  const rk=ranking(),rankOf=i=>(rk.find(x=>x.i===i)||{}).rank;
+  put("w-top",(isOwner?'<div class="row" style="justify-content:flex-end;margin-bottom:.6rem"><button class="btn ghost small" data-act="unwall">Retour à l\'administration</button></div>':'')+(G.status==="over"?'<h2>Bilan de la partie</h2>':''));
+  put("w-grid",[0,1,2,3,4,5].map(c=>{
+    const cs=CT.list[c],rd=roundDoc(G.round,c);
+    let stt;
+    if(G.status==="lobby")stt='<span class="muted">'+playersIn(c).length+' joueur'+(playersIn(c).length>1?"s":"")+'</span>';
+    else if(G.status==="over")stt='<span class="muted">Politiques :</span>'+polStrip(cs.hist||[]);
+    else if(!rd){const b=bulletin(c);stt='<b>Vote en cours</b> : '+votesIn(G.round,c).length+' / '+playersIn(c).length+(b?'<p class="small" style="margin:.3rem 0 0"><i>« '+esc(b.text)+' »</i> ('+b.p+' %)</p>':'');}
+    else stt='<b>'+(rd.paralysis?"Gouvernement paralysé":esc(rd.policyName))+'</b>'+(rd.urgent?' <span class="pill" style="color:var(--bad)">Urgence</span>':'')+(rd.bulletin?'<p class="small" style="margin:.2rem 0 0">'+(rd.bulletin.real?"Prévision réalisée":"Fausse alerte")+' ('+rd.bulletin.p+' %)</p>':'')+(S().publicVotes?tallyHTML(rd,false):'')+'<div class="chips">'+(rd.event?'<span class="chip">'+esc(rd.event.name)+'</span>':'')+(rd.cons||[]).map(k=>'<span class="chip '+k.cat+'">'+k.cat+' : '+esc(k.name)+'</span>').join("")+'</div>';
+    return '<section class="cpanel" style="--cc:var(--c'+c+')"><div class="head"><h2>'+esc(cname(c))+'</h2><span class="rank">'+(G.status==="lobby"?"":"Rang "+rankOf(c))+'</span></div>'+
+      gauge("inf",cs.inf,true)+gauge("ch",cs.ch,true)+gauge("cr",cs.cr,true)+(cs.pend?'<p class="small" style="color:var(--warn);margin:0">À venir : inflation '+sgn(cs.pend)+'</p>':'')+((S().urgentTokens??2)&&G.status!=="lobby"?'<p class="small muted" style="margin:0">Mesures d\'urgence : '+tokensLeft(c)+' sur '+(S().urgentTokens??2)+'</p>':'')+scoreBox(cs,false)+'<div class="state">'+stt+'</div>'+
+      (G.status==="over"?chart(cs.hist||[],S().rounds):'')+'</section>';
+  }).join(""));
+  put("w-end",G.status==="over"?'<div class="panel" style="margin-top:1rem">'+legend+'<table style="margin-top:.6rem"><thead><tr><th>Rang</th><th>Pays</th><th class="r">Popularité perdue</th><th class="r">Finances perdues</th><th class="r">Points</th></tr></thead><tbody>'+rk.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(cname(x.i))+'</td><td class="r">'+x.c.pop+'</td><td class="r">'+x.c.fin+'</td><td class="r num">'+x.sc+'</td></tr>').join("")+'</tbody></table></div>':
+    '<p class="small muted" style="margin-top:.8rem">Zones vertes : inflation de 0 à 4 %, chômage de 4 à 7 %. Croissance : sous 0 %, le chômage monte de 1 ; au-dessus de 3 %, il baisse de 1.</p>');
+}
+
+/* ----- Administration ----- */
+const TABS=[["partie","Partie"],["participants","Participants"],["parametres","Paramètres"],["contenu","Contenu du jeu"],["historique","Historique"]];
+function renderAdmin(){
+  skeleton("admin-"+ui.tab,'<div id="a-tabs"></div><div id="a-body"></div>');
+  put("a-tabs",'<div class="tabs" role="tablist">'+TABS.map(([k,l])=>'<button role="tab" data-act="tab" data-t="'+k+'" aria-selected="'+(ui.tab===k)+'">'+l+(k==="participants"?" ("+joined().length+")":"")+'</button>').join("")+'<button data-act="logout" style="margin-left:auto">Se déconnecter</button></div>');
+  const f={partie:adminGame,participants:adminPlayers,parametres:adminSettings,contenu:adminContent,historique:adminHistory}[ui.tab];
+  put("a-body",f());
+}
+function armBtn(act,label,armedLabel,cls){return '<button class="btn '+(cls||"danger")+(ui.armed===act?" armed":"")+'" data-act="'+act+'">'+(ui.armed===act?armedLabel:label)+'</button>'}
+function adminGame(){
+  let h='<div class="panel"><div class="row"><div class="grow">';
+  if(!G)return h+'<h2>Aucune partie</h2><p>Crée une partie, puis donne l\'adresse du site à tes étudiant·es.</p></div><button class="btn" data-act="newgame">Créer une partie</button></div></div>';
+  const N=S().rounds,live=isLive();
+  h+='<h2>'+esc(S().label||"Partie en cours")+'</h2><p class="muted">'+joined().length+' inscrit·es. '+(G.status==="lobby"?"Inscriptions ouvertes.":G.status==="over"?"Partie terminée.":"Tour "+G.round+" sur "+N+".")+'</p></div>'+
+    '<button class="btn ghost" data-act="wall">Afficher les 6 pays (projection)</button>'+armBtn("newgame","Nouvelle partie","Confirmer : archiver et tout effacer")+'</div>';
+  h+='<p class="small muted" style="margin-top:.5rem">Lien des étudiant·es : l\'adresse du site, sans rien ajouter. Projection : ajoute <b>#affichage</b> à la fin. Administration : ajoute <b>#admin</b>.</p>';
+  const minInput='<label for="a-min">Minuterie (min, 0 = aucune)</label><input id="a-min" type="number" min="0" max="30" step="0.5" style="width:5.5rem" value="'+esc(ui.min!==""?ui.min:S().timerMin)+'">';
+  if(G.status==="lobby"){
+    const asg=AS&&AS.session===G.session&&AS.done;
+    h+='<div class="row" style="margin-top:.8rem"><button class="btn '+(asg?"ghost":"")+'" data-act="assign"'+(joined().length?'':' disabled')+'>'+(asg?"Refaire la répartition au hasard":"Répartir les équipes au hasard")+'</button>'+minInput+'<button class="btn" data-act="start"'+(asg?'':' disabled')+'>Commencer la partie (tour 1)</button></div>';
+    if(!asg)h+='<p class="small muted">Attends que tout le monde soit inscrit, puis répartis les équipes. Les retardataires seront placés automatiquement dans le pays qui a le moins de joueurs.</p>';
+  } else if(G.status==="vote"){
+    const done=allResolved();
+    if(!done)h+='<div class="row" style="margin-top:.8rem"><button class="btn" data-act="forceall">Forcer le décompte partout</button>'+(G.endsAt?'<button class="btn ghost small" data-act="addtime" data-s="60">+ 1 min</button><button class="btn ghost small" data-act="stoptimer">Arrêter la minuterie</button>':'<span class="small muted">'+(live?"Aucune minuterie.":"")+'</span>')+'</div><p class="small muted">Le décompte se fait automatiquement dès que tous les joueurs d\'un pays ont voté'+(G.endsAt?", et partout à la fin de la minuterie":"")+'. Garde cette page ouverte pendant la partie.</p>';
+    else if(G.round<N)h+='<div class="row" style="margin-top:.8rem">'+minInput+'<button class="btn" data-act="next">Ouvrir le tour '+(G.round+1)+'</button></div>';
+    else h+='<div class="row" style="margin-top:.8rem"><button class="btn" data-act="finish">Terminer la partie et afficher le bilan</button></div>';
+  }
+  h+='</div>';
+  if(G.status!=="lobby"&&CT){
+    h+='<div class="wall">'+[0,1,2,3,4,5].map(c=>{
+      const cs=CT.list[c],rd=roundDoc(G.round,c),pl=playersIn(c),vs=votesIn(G.round,c),voted=new Set(vs.map(v=>v.by));
+      let b='<section class="cpanel" style="--cc:var(--c'+c+')"><div class="head"><h2>'+esc(cname(c))+'</h2><span class="rank">'+score(cs)+' pts</span></div>'+
+        '<p class="small">Inflation '+pct(cs.inf)+', chômage '+pct(cs.ch)+', croissance '+pct(cs.cr)+'</p>';
+      if(G.status==="vote"&&!rd){
+        const miss=pl.filter(p=>!voted.has(p.id));
+        const bl=bulletin(c);
+        b+=(bl?'<p class="small"><i>« '+esc(bl.text)+' »</i> ('+bl.p+' %)</p>':'')+'<p><b>'+vs.length+' / '+pl.length+'</b> votes, '+vs.filter(v=>v.urg).length+' pour l\'urgence. Jetons : '+tokensLeft(c)+'</p>'+(miss.length?'<p class="small">Pas encore voté : '+miss.map(p=>esc(p.pseudo)).join(", ")+'</p>':'')+
+          '<button class="btn small" data-act="force" data-c="'+c+'">Forcer le décompte'+(vs.length?" ("+vs.length+" vote"+(vs.length>1?"s":"")+")":"")+'</button>';
+      } else if(rd)b+=resultHTML(rd,c,true);
+      return b+'</section>';
+    }).join("")+'</div>';
+  }
+  return h;
+}
+function adminPlayers(){
+  const js=joined();
+  if(!G)return '<p class="muted">Crée une partie pour voir les inscriptions.</p>';
+  if(!js.length)return '<div class="panel"><p class="muted">Personne n\'est encore inscrit. Donne l\'adresse du site à tes étudiant·es.</p></div>';
+  const opts=cur=>'<option value=""'+(cur===undefined?" selected":"")+'>Aucun pays</option>'+[0,1,2,3,4,5].map(c=>'<option value="'+c+'"'+(cur===c?" selected":"")+'>'+esc(cname(c))+'</option>').join("");
+  const counts=[0,1,2,3,4,5].map(c=>playersIn(c).length);
+  return '<div class="panel"><h2>Participant·es</h2><p class="small muted">Répartition actuelle : '+counts.map((n,c)=>esc(cname(c))+" "+n).join(", ")+'. Tu peux déplacer quelqu\'un à tout moment ; son vote du tour en cours suit son nouveau pays.</p><div class="scroll"><table><thead><tr><th>Prénom dans le jeu</th><th>Pays</th><th>Vote du tour</th></tr></thead><tbody>'+
+    js.sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0)).map(p=>{const c=countryOf(p.id),v=G.round?V.find(x=>x.round===G.round&&x.by===p.id):null;
+      return '<tr><td><div class="row" style="flex-wrap:nowrap"><input type="text" id="pn-'+esc(p.id)+'" data-pn="'+esc(p.id)+'" value="'+esc(ui.pn[p.id]??p.pseudo)+'" maxlength="24" style="width:10rem" aria-label="Prénom"><button class="btn ghost small" data-act="rename" data-id="'+esc(p.id)+'">Enregistrer</button></div></td>'+
+        '<td><select data-move="'+esc(p.id)+'" aria-label="Pays">'+opts(c)+'</select></td><td>'+(G.status==="vote"?(v?"A voté":'<span style="color:var(--warn)">Pas encore</span>'):'<span class="muted">–</span>')+'</td></tr>'}).join("")+
+    '</tbody></table></div></div>';
+}
+function adminSettings(){
+  if(!G)return '<p class="muted">Crée une partie pour régler les paramètres.</p>';
+  const s=S();
+  return '<div class="panel"><h2>Paramètres</h2><div class="grid g2e"><div>'+
+    '<label class="f">Nom de la partie (par exemple le groupe)<input type="text" data-set="label" value="'+esc(s.label)+'" maxlength="60"></label>'+
+    '<label class="f">Nombre de tours<input type="number" data-set="rounds" min="'+Math.max(1,G.round)+'" max="20" value="'+s.rounds+'"></label>'+
+    '<label class="f">Minuterie par défaut (minutes, 0 = aucune)<input type="number" data-set="timerMin" min="0" max="30" step="0.5" value="'+s.timerMin+'"></label>'+
+    '<label class="f">Mesures d\'urgence par pays pour la partie<input type="number" data-set="urgentTokens" min="0" max="10" value="'+(s.urgentTokens??2)+'"></label>'+
+    '<label class="f">Probabilités possibles des bulletins (en %, séparées par des virgules)<input type="text" data-set="probs" value="'+esc((s.probs||[30,50,70]).join(", "))+'"></label>'+
+    '<label class="f" style="color:var(--ink)"><input type="checkbox" data-set="publicVotes"'+(s.publicVotes?" checked":"")+' style="width:auto;display:inline;margin-right:.4rem">Rendre les votes publics : chaque pays voit le décompte, les prénoms et les justifications après le vote, et l\'écran projeté montre le décompte.</label>'+
+    '</div><div><h3>Noms des pays</h3>'+[0,1,2,3,4,5].map(c=>'<label class="f"><span class="cname"><span class="flag" style="--cc:var(--c'+c+');height:14px"></span>Pays '+(c+1)+'</span><input type="text" data-set="names.'+c+'" value="'+esc(cname(c))+'" maxlength="30"></label>').join("")+'</div></div></div>';
+}
+function numIn(path,v,lab){return '<input type="number" data-dk="'+path+'" value="'+esc(v)+'" step="1" aria-label="'+lab+'">'}
+function adminContent(){
+  const dk=decks();
+  let h='<div class="panel"><h2>Contenu du jeu</h2><p class="small muted">Les modifications s\'appliquent aux prochains tirages. Le calendrier des événements est fixé au lancement d\'une partie : un événement modifié en cours de partie garde ses anciens effets. Pour la popularité et les finances, inscris le nombre de points perdus (0 ou plus).</p><div class="row">'+armBtn("resetdecks","Restaurer le contenu de départ","Confirmer la restauration","ghost")+'</div></div>';
+  h+='<div class="panel"><h3>Politiques</h3><div class="edit-row edit-head"><span>Nom</span><span>Chômage</span><span>Inflation</span><span>Croissance</span><span>Popularité perdue</span><span>Finances perdues</span><span></span></div>'+
+    dk.policies.map((p,i)=>'<div class="edit-row"><input type="text" data-dk="policies.'+i+'.name" value="'+esc(p.name)+'" aria-label="Nom">'+numIn("policies."+i+".ch",p.ch,"Chômage")+numIn("policies."+i+".inf",p.inf,"Inflation")+numIn("policies."+i+".cr",p.cr,"Croissance")+numIn("policies."+i+".pop",p.pop,"Popularité perdue")+numIn("policies."+i+".fin",p.fin,"Finances perdues")+
+      '<label class="small"><input type="checkbox" data-dk="policies.'+i+'.lag"'+(p.lag?" checked":"")+'> Inflation au tour suivant</label><textarea data-dk="policies.'+i+'.desc" aria-label="Description">'+esc(p.desc)+'</textarea></div>').join("")+'</div>';
+  h+='<div class="panel"><h3>Mesures d\'urgence</h3><p class="small muted">Chaque mesure est la version d\'urgence d\'une politique. « Inflation » s\'applique tout de suite, « Inflation différée » au tour suivant.</p><div class="edit-row u6 edit-head"><span>Nom</span><span>Chômage</span><span>Inflation</span><span>Inflation différée</span><span>Croissance</span><span>Popularité perdue</span><span>Finances perdues</span></div>'+
+    dk.urgent.map((u,i)=>'<div class="edit-row u6"><input type="text" data-dk="urgent.'+i+'.name" value="'+esc(u.name)+'" aria-label="Nom">'+numIn("urgent."+i+".ch",u.ch,"Chômage")+numIn("urgent."+i+".inf",u.inf,"Inflation")+numIn("urgent."+i+".def",u.def,"Inflation différée")+numIn("urgent."+i+".cr",u.cr,"Croissance")+numIn("urgent."+i+".pop",u.pop,"Popularité perdue")+numIn("urgent."+i+".fin",u.fin,"Finances perdues")+
+      '<textarea data-dk="urgent.'+i+'.desc" aria-label="Description">'+esc(u.desc)+'</textarea></div>').join("")+'</div>';
+  h+='<div class="panel"><h3>Événements aléatoires ('+dk.events.length+')</h3><div class="edit-row edit-head"><span>Nom</span><span>Chômage</span><span>Inflation</span><span>Croissance</span><span>Effet spécial</span><span></span><span></span></div>'+
+    dk.events.map((e,i)=>'<div class="edit-row"><input type="text" data-dk="events.'+i+'.name" value="'+esc(e.name)+'" aria-label="Nom">'+numIn("events."+i+".ch",e.ch,"Chômage")+numIn("events."+i+".inf",e.inf,"Inflation")+numIn("events."+i+".cr",e.cr,"Croissance")+
+      '<select data-dk="events.'+i+'.flag" aria-label="Effet spécial" style="grid-column:span 2">'+Object.entries(FLAGS).map(([k,l])=>'<option value="'+k+'"'+(e.flag===k?" selected":"")+'>'+l+'</option>').join("")+'</select>'+
+      '<button class="btn danger small" data-act="delitem" data-path="events.'+i+'">Retirer</button><textarea data-dk="events.'+i+'.desc" aria-label="Description">'+esc(e.desc)+'</textarea><textarea data-dk="events.'+i+'.bulletin" aria-label="Bulletin de prévision" placeholder="Bulletin de prévision : ce que les économistes annoncent, sans effet chiffré">'+esc(e.bulletin||"")+'</textarea></div>').join("")+
+    '<button class="btn ghost small" data-act="additem" data-path="events" style="margin-top:.6rem">Ajouter un événement</button></div>';
+  for(const k of ["A","B","C","D"]){
+    h+='<div class="panel"><h3>Conséquences '+k+' : '+CATS[k]+' ('+dk.cons[k].length+')</h3><div class="edit-row edit-head"><span>Nom</span><span>Chômage</span><span>Inflation</span><span>Croissance</span><span>Popularité perdue</span><span>Finances perdues</span><span></span></div>'+
+      dk.cons[k].map((c,i)=>{const p="cons."+k+"."+i;return '<div class="edit-row"><input type="text" data-dk="'+p+'.name" value="'+esc(c.name)+'" aria-label="Nom">'+numIn(p+".ch",c.ch,"Chômage")+numIn(p+".inf",c.inf,"Inflation")+numIn(p+".cr",c.cr,"Croissance")+numIn(p+".pop",c.pop,"Popularité perdue")+numIn(p+".fin",c.fin,"Finances perdues")+
+        '<button class="btn danger small" data-act="delitem" data-path="'+p+'">Retirer</button><textarea data-dk="'+p+'.desc" aria-label="Description">'+esc(c.desc)+'</textarea></div>'}).join("")+
+      '<button class="btn ghost small" data-act="additem" data-path="cons.'+k+'" style="margin-top:.6rem">Ajouter une conséquence '+k+'</button></div>';
+  }
+  return h;
+}
+function adminHistory(){
+  if(!AR.length)return '<div class="panel"><p class="muted">Aucune partie archivée. Une partie est archivée quand tu la termines ou que tu en crées une nouvelle.</p></div>';
+  return AR.sort((a,b)=>(b.date||0)-(a.date||0)).map(a=>'<div class="panel"><div class="row"><div class="grow"><h3>'+esc(a.label||"Partie sans nom")+'</h3><p class="small muted">'+new Date(a.date).toLocaleDateString("fr-CA",{day:"numeric",month:"long",year:"numeric"})+', '+a.roundsPlayed+' tour'+(a.roundsPlayed>1?"s":"")+' joué'+(a.roundsPlayed>1?"s":"")+', '+a.players+' joueurs</p></div>'+armBtn("delarch:"+a.id,"Supprimer","Confirmer la suppression")+'</div>'+
+    '<div class="scroll"><table><thead><tr><th>Rang</th><th>Pays</th><th class="r">Popularité perdue</th><th class="r">Finances perdues</th><th class="r">Points</th><th>Politiques</th></tr></thead><tbody>'+
+    (a.results||[]).map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td class="r">'+x.pop+'</td><td class="r">'+x.fin+'</td><td class="r num">'+x.score+'</td><td class="small">'+esc((x.policies||[]).join(", "))+'</td></tr>').join("")+'</tbody></table></div></div>').join("");
+}
+
+/* ========== Actions ========== */
+document.addEventListener("input",e=>{const t=e.target;if(t.id==="why")ui.why=t.value;if(t.id==="a-min")ui.min=t.value;if(t.dataset.pn)ui.pn[t.dataset.pn]=t.value});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.set!==undefined)return setSetting(t).catch(writeErr);
+  if(t.dataset.dk!==undefined)return setDeck(t).catch(writeErr);
+  if(t.dataset.move!==undefined)return movePlayer(t.dataset.move,t.value).catch(writeErr);
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="pseudo")act("join")});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(b&&!b.disabled)act(b.dataset.act,b)});
+let busy=false;
+async function act(a,b){
+  if(a==="tab"){ui.tab=b.dataset.t;ui.armed=null;render();return}
+  if(a==="logout"){B.logout();return}
+  if(a==="sel"){ui.sel=b.dataset.p;if(!urgentFor(ui.sel))ui.urg=false;render();return}
+  if(a==="urg"){ui.urg=b.dataset.v==="1";render();return}
+  if(a==="wall"){ui.wall=true;skel=null;render();window.scrollTo(0,0);return}
+  if(a==="unwall"){ui.wall=false;if(location.hash==="#affichage")history.replaceState(null,"",location.pathname+location.search);skel=null;render();return}
+  if(a==="newgame"||a==="resetdecks"||a.startsWith("delarch:")){
+    if((G||a!=="newgame")&&ui.armed!==a){ui.armed=a;render();setTimeout(()=>{if(ui.armed===a){ui.armed=null;render()}},4000);return}
+    ui.armed=null;
+  }
+  if(busy)return;busy=true;
+  try{
+    if(a==="join")await join();
+    else if(a==="vote")await vote();
+    else if(a==="newgame")await newGame();
+    else if(a==="assign")await assign();
+    else if(a==="start")await openRound(1);
+    else if(a==="next")await openRound(G.round+1);
+    else if(a==="force")await enqueue(+b.dataset.c,true);
+    else if(a==="forceall")await forceAll();
+    else if(a==="addtime")await db.doc("game/state").update({endsAt:Math.max(Date.now(),G.endsAt||Date.now())+60000});
+    else if(a==="stoptimer")await db.doc("game/state").update({endsAt:null});
+    else if(a==="finish")await finish();
+    else if(a==="rename")await rename(b.dataset.id);
+    else if(a==="resetdecks"){await db.doc("game/decks").set(defaultDecks());toast("Contenu de départ restauré.")}
+    else if(a==="additem")await addItem(b.dataset.path);
+    else if(a==="delitem")await delItem(b.dataset.path);
+    else if(a.startsWith("delarch:"))await db.doc("archive/"+a.slice(8)).delete();
+  }catch(err){writeErr(err)}finally{busy=false;render()}
+}
+async function join(){
+  const p=(($("#pseudo")||{}).value||"").trim();if(!p)return toast("Écris ton prénom.");
+  await db.doc("players/"+uid).set({pseudo:p.slice(0,24),session:G.session,joinedAt:Date.now()});
+}
+async function vote(){
+  if(!isLive())return toast("Le vote est fermé.");
+  const c=countryOf(uid);if(c===undefined||roundDoc(G.round,c))return toast("Le décompte de ton pays est déjà fait.");
+  if(!ui.sel)return toast("Choisis d'abord une politique.");
+  const why=ui.why.trim();if(why.length<5)return toast("Écris en une phrase l'objectif de ton choix.");
+  const urg=!!(ui.urg&&urgentFor(ui.sel)&&tokensLeft(c)>0);
+  await db.doc("votes/"+G.session+"_"+G.round+"_"+uid).set({session:G.session,round:G.round,country:c,by:uid,policy:ui.sel,urg,why:why.slice(0,280),ts:Date.now()});
+  toast("Vote enregistré.");
+}
+function freshCountries(sid){return {session:sid,list:[0,1,2,3,4,5].map(()=>({ch:START.ch,inf:START.inf,cr:START.cr,pop:0,fin:0,pend:0,urg:0,hist:[{r:0,ch:START.ch,inf:START.inf,cr:START.cr,pop:0,fin:0,pol:""}]}))}}
+async function archiveCurrent(){
+  if(!G||!CT||!G.round)return;
+  const rk=ranking();
+  await db.doc("archive/"+G.session).set({label:S().label||"",date:Date.now(),roundsPlayed:Math.max(...CT.list.map(c=>(c.hist||[]).length-1)),players:joined().length,
+    results:rk.map(x=>({rank:x.rank,name:cname(x.i),pop:x.c.pop,fin:x.c.fin,score:x.sc,policies:(x.c.hist||[]).slice(1).map(h=>h.pol)}))});
+}
+async function newGame(){
+  if(G&&G.round&&!AR.some(a=>a.id===G.session))await archiveCurrent();
+  const sid=newId(),settings=G?Object.assign({},S(),{label:""}):defaultSettings();
+  if(!DK)await db.doc("game/decks").set(defaultDecks());
+  await db.doc("game/countries").set(freshCountries(sid));
+  await db.doc("game/assign").set({session:sid,map:{},done:false});
+  await db.doc("game/state").set({session:sid,status:"lobby",round:0,endsAt:null,settings});
+  ui.sel=null;ui.why="";toast("Nouvelle partie créée.");cleanup(sid);
+}
+async function cleanup(keep){
+  for(const col of ["votes","rounds"]){try{const q=await db.collection(col).where("session","!=",keep).limit(500).get();for(const d of q.docs)await db.doc(col+"/"+d.id).delete()}catch(e){console.warn(e)}}
+}
+async function assign(){
+  const ps=shuffle(joined().slice()),map={};ps.forEach((p,i)=>map[p.id]=i%6);
+  await db.doc("game/assign").set({session:G.session,map,done:true});
+  toast("Équipes réparties : "+ps.length+" joueurs dans 6 pays.");
+}
+async function movePlayer(id,val){
+  const map=Object.assign({},AS&&AS.session===G.session?AS.map:{});
+  if(val==="")delete map[id];else map[id]=+val;
+  await db.doc("game/assign").set({session:G.session,map,done:!!(AS&&AS.done)});
+}
+async function rename(id){
+  const i=document.querySelector('[data-pn="'+id+'"]'),v=i?i.value.trim():"";if(!v)return toast("Le prénom ne peut pas être vide.");
+  await db.doc("players/"+id).update({pseudo:v.slice(0,24)});delete ui.pn[id];toast("Prénom changé pour « "+v.slice(0,24)+" ».");
+}
+function makeBulletins(plan,r){
+  const dk=decks(),probs=(S().probs&&S().probs.length?S().probs:[30,50,70]);
+  return [0,1,2,3,4,5].map(c=>{
+    const ev=plan.events[plan.order[c][(r-1)%plan.order[c].length]],p=pick(probs),real=Math.random()<p/100;
+    let src=ev;if(!real){const others=dk.events.filter(e=>e.name!==ev.name);if(others.length)src=pick(others)}
+    return {text:src.bulletin||("Les économistes évoquent un risque : "+src.name.toLowerCase()+"."),p,real:real||src===ev,about:src.name};
+  });
+}
+async function openRound(r){
+  const m=parseFloat(ui.min!==""?ui.min:S().timerMin)||0;
+  if(r===1&&!CT)await db.doc("game/countries").set(freshCountries(G.session));
+  let plan=PLAN&&PLAN.session===G.session?clone(PLAN):null;
+  if(!plan||r===1){
+    const dk=decks(),N=S().rounds;let pool=[];
+    while(pool.length<N)pool=pool.concat(shuffle(dk.events.map(clone)));
+    const events=pool.slice(0,N);
+    plan={session:G.session,events,order:Object.fromEntries([0,1,2,3,4,5].map(c=>[String(c),shuffle(events.map((_,i)=>i))])),bulletins:{}};
+  }
+  if(plan.events.length<S().rounds){const dk=decks();const extra=shuffle(dk.events.map(clone)).slice(0,S().rounds-plan.events.length);const base=plan.events.length;plan.events=plan.events.concat(extra);for(let c=0;c<6;c++)plan.order[c]=plan.order[c].concat(shuffle(extra.map((_,i)=>base+i)))}
+  const bl=makeBulletins(plan,r);plan.bulletins[r]=bl;
+  await db.doc("secret/plan").set(plan);
+  await db.doc("game/bulletins").set({session:G.session,round:r,list:bl.map(b=>({text:b.text,p:b.p}))});
+  await db.doc("game/state").update({status:"vote",round:r,endsAt:m>0?Date.now()+m*60000:null});
+  ui.sel=null;ui.why="";ui.min="";
+}
+async function finish(){
+  await db.doc("game/state").update({status:"over",endsAt:null});
+  await archiveCurrent();toast("Partie terminée et archivée.");ui.wall=true;skel=null;
+}
+async function setSetting(t){
+  const s=clone(S()),k=t.dataset.set;
+  if(k.startsWith("names.")){const i=+k.slice(6);s.names=s.names||DEF_NAMES.slice();s.names[i]=t.value.trim()||DEF_NAMES[i]}
+  else if(k==="publicVotes")s.publicVotes=t.checked;
+  else if(k==="rounds"){const n=Math.round(+t.value);if(!(n>=Math.max(1,G.round)&&n<=20)){t.value=s.rounds;return toast("Entre un nombre de tours entre "+Math.max(1,G.round)+" et 20.")}s.rounds=n}
+  else if(k==="timerMin"){const n=parseFloat(t.value);if(!(n>=0&&n<=30)){t.value=s.timerMin;return}s.timerMin=n}
+  else if(k==="label")s.label=t.value.trim();
+  else if(k==="urgentTokens"){const n=Math.round(+t.value);if(!(n>=0&&n<=10)){t.value=s.urgentTokens??2;return toast("Entre un nombre entre 0 et 10.")}s.urgentTokens=n}
+  else if(k==="probs"){const l=t.value.split(/[,;\s]+/).map(x=>Math.round(+x)).filter(x=>x>=1&&x<=100);if(!l.length){t.value=(s.probs||[30,50,70]).join(", ");return toast("Entre au moins un pourcentage entre 1 et 100.")}s.probs=l;t.value=l.join(", ")}
+  await db.doc("game/state").update({settings:s});
+}
+async function setDeck(t){
+  const dk=clone(decks()),path=t.dataset.dk.split("."),key=path.pop();let o=dk;for(const p of path)o=o[p];
+  if(!o)return;
+  if(t.type==="checkbox")o[key]=t.checked;
+  else if(t.type==="number"){const n=Math.round(+t.value);if(!isFinite(n)){t.value=o[key];return}o[key]=(key==="pop"||key==="fin")?Math.max(0,n):n}
+  else if(key==="name"){const v=t.value.trim();if(!v){t.value=o[key];return}o[key]=v}
+  else o[key]=t.value.trim();
+  await db.doc("game/decks").set(dk);
+}
+async function addItem(path){
+  const dk=clone(decks());
+  if(path==="events")dk.events.push({id:newId(),name:"Nouvel événement",ch:0,inf:0,cr:0,flag:"",desc:"",bulletin:""});
+  else{const k=path.split(".")[1];dk.cons[k].push({id:newId(),name:"Nouvelle conséquence",ch:0,inf:0,cr:0,pop:1,fin:0,desc:""})}
+  await db.doc("game/decks").set(dk);
+}
+async function delItem(path){
+  const dk=clone(decks()),p=path.split(".");
+  if(p[0]==="events"){if(dk.events.length<=1)return toast("Garde au moins un événement.");dk.events.splice(+p[1],1)}
+  else{if(dk.cons[p[1]].length<=1)return toast("Garde au moins une conséquence par catégorie.");dk.cons[p[1]].splice(+p[2],1)}
+  await db.doc("game/decks").set(dk);
+}
+</script>
+</body>
+</html>
